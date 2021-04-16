@@ -64,7 +64,13 @@ drop_columns= st.sidebar.multiselect('Select columns to be dropped ', df.columns
 key_columns= st.sidebar.multiselect('Select key columns *', df.columns.tolist()) 
 
 
-
+column_parameters={}
+column_parameters['Created on'] = created_on_column
+column_parameters['Req delivery date'] = req_date_column
+column_parameters['Delivered Date'] = delivery_date_column
+column_parameters['Order received'] = order_qty
+column_parameters['Order deivered'] = delivered_qty
+column_parameters['Keys'] = key_columns
 
 
 
@@ -155,8 +161,20 @@ def display_results(test_df,prediction,  target, proba):
     return round(accuracy_score(test_df[target], prediction)*100,2), auc
    
 
+
+############################################################ Submit model header ##########################################
+def show_submit_header():
+     html_submit='''
+     <div style= 'background-color: pink; padding:13px';>
+     <h3 style= "color:black; text-align:center;"> Click on below button to submit the model </h3>
+     </div>
+     <br>
+     '''
+
+     st.markdown(html_submit, unsafe_allow_html=True)
+     
 ############################################################ Save Resuts ###################################################
-def save_model_to_blob(model, train_columns, algo_name, encode_dict, accuracy, auc):
+def save_model_to_blob(model, train_columns, algo_name, encode_dict, accuracy, auc, column_parameters):
     local_path = "." 
     filename = 'OTIF_model.sav'
     pickle.dump(model, open(filename, 'wb'))
@@ -178,6 +196,7 @@ def save_model_to_blob(model, train_columns, algo_name, encode_dict, accuracy, a
     'Accuracy': round(accuracy,2),
     'AUC score': round(auc,2)}
     meta_data['Algorithm']= algo_name
+    meta_data['Parameters']= column_parameters
     
     
     
@@ -249,7 +268,7 @@ if len(filename_select) !=0 and len(key_columns)>0 and created_on_column != req_
     df, encode_dict= preprocess_df(df,order_qty, delivered_qty,req_date_column,delivery_date_column,key_columns ,created_on_column )    
     df = df.set_index(created_on_column)
        
-    next_run= st.radio("Run", ("Analysis", "Model")) 
+    next_run= st.radio("Run", ( "Model", "Analysis")) 
 
     if  next_run== "Analysis":
         st.info("Coming soon...")
@@ -263,11 +282,20 @@ if len(filename_select) !=0 and len(key_columns)>0 and created_on_column != req_
         train_df= df.iloc[:split_value]
         test_df= df.iloc[split_value:]
         
-        st.markdown("#### Length of Training set: "+ str(len(train_df)))
-        st.markdown("#### Length of Test set: "+ str(len(test_df)))
+        st.markdown("##### Length of Training set: "+ str(len(train_df)))
+        st.markdown("##### Length of Test set: "+ str(len(test_df)))
+        
+        html_choose_algo='''<br>
+        <div style= 'background-color: pink; padding:13px';>
+        <h3 style= "color:black; text-align:center;"> Choose algorithm </h3>
+        </div>
+        <br>
+        '''
+    
+        st.markdown(html_choose_algo, unsafe_allow_html=True)
         
         algorithm_name_list= ['None',   'Random Forest','XG Boost', 'K Nearest Neighbor']
-        algorithm_name= st.selectbox('Select algorithm', algorithm_name_list)
+        algorithm_name= st.selectbox(' ', algorithm_name_list)
         
 
         
@@ -303,8 +331,9 @@ if len(filename_select) !=0 and len(key_columns)>0 and created_on_column != req_
             
             accuracy, auc= display_results(test_df,rf_prediction,  "OTIF", rf_prediction_proba)
             
+            show_submit_header()
             if (st.button("Submit Model")):
-                save_model_to_blob(model, train_df.columns.tolist(), 'Random Forest',encode_dict,accuracy, auc)
+                save_model_to_blob(model, train_df.columns.tolist(), 'Random Forest',encode_dict,accuracy, auc, column_parameters)
             
             
         ####################################### KNN #######################################
@@ -319,8 +348,9 @@ if len(filename_select) !=0 and len(key_columns)>0 and created_on_column != req_
             
             accuracy, auc= display_results(test_df,knn_prediction,  "OTIF", knn_prediction_proba)
             
+            show_submit_header()
             if (st.button("Submit Model")):
-                save_model_to_blob(model, train_df.columns.tolist(), 'K Nearest Neighbor',encode_dict,accuracy, auc)
+                save_model_to_blob(model, train_df.columns.tolist(), 'K Nearest Neighbor',encode_dict,accuracy, auc, column_parameters)
             
     ################################################### XG Boost ##############################
         elif algorithm_name == 'XG Boost':
@@ -345,8 +375,9 @@ if len(filename_select) !=0 and len(key_columns)>0 and created_on_column != req_
             xgb_prediction_proba = model.predict_proba(test_df.drop("OTIF", axis=1))[::,1]
             accuracy, auc= display_results(test_df,xgb_prediction,  "OTIF",xgb_prediction_proba)   
             
+            show_submit_header()
             if (st.button("Submit Model")):
-                save_model_to_blob(model, train_df.columns.tolist(), 'XG Boost',encode_dict,accuracy, auc)
+                save_model_to_blob(model, train_df.columns.tolist(), 'XG Boost',encode_dict,accuracy, auc, column_parameters)
                 
 
 else:
