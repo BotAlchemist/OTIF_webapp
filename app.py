@@ -271,7 +271,30 @@ if len(filename_select) !=0 and len(key_columns)>0 and created_on_column != req_
     next_run= st.radio("Run", ( "Model", "Analysis")) 
 
     if  next_run== "Analysis":
-        st.info("Coming soon...")
+        st.info("Correlation matrix")
+        corr = df.corr()
+        fig= corr.style.background_gradient(cmap='coolwarm')
+        st.write(fig)
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
     if next_run=="Model":
         split= st.slider("Train/Test split %", 50, 99)
         
